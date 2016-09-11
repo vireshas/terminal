@@ -16,21 +16,21 @@ var t = new hterm.Terminal()
 var pty = spawn(defaultShell, [])
 
 function isWebpage(data) {
-  if ( data.match(/https?/) ) {
+  if ( typeof data === 'string' && data.match(/https?/) ) {
     return true
   }
   return false
 }
 
 function isImage(data) {
-  if ( data.indexOf(".png") != -1 || data.indexOf(".gif") != -1 ) {
+  if ( typeof data === 'string' && data.indexOf(".png") != -1 || data.indexOf(".gif") != -1 ) {
     return true
   }
   return false
 }
 
 function shouldOpenInNewWindow(data) {
-  if (data.match(/o /) || data.match(/open /)) {
+  if (data && (data.match(/o /) || data.match(/open /))) {
     return true
   }
   return false
@@ -45,18 +45,14 @@ function openImageInline(data) {
 function popOpenLink(link) {
   let c = new BrowserWindow({modal: true, show: false})
   c.loadURL(link)
-  c.once('ready-to-show', () => {
-    c.show()
-  })
+  c.once('ready-to-show', () => { c.show() })
 }
 
 function inputHandler(data) {
   let command = t.getRowText(t.getCursorRow()).split("\(master\)")[1]
-  console.log(`56 command ${command}`)
 
   if (command) {
     command = command.slice(3, command.length)
-    console.log(`59 command ${command}`)
     if ( command.length > 0) {
       msg["message"] = command
       let l_msg = JSON.stringify(msg)
@@ -91,9 +87,32 @@ t.onTerminalReady = function() {
   });
 
   ws.on('message', function(data, flags) {
-    data = JSON.parse(data)
-    console.log(data[0])
-    popOpenLink(data[0])
+    try {
+      console.log(data)
+      data = JSON.parse(data)
+
+      if (isWebpage(data[0])) {
+        popOpenLink(data[0])
+      } else {
+        t.clear()
+        if ( typeof data == 'string' ) {
+          pty.stdin.write(ele);
+        } else {
+          for (let ele of data) {
+            if (typeof ele == 'object') {
+              var pj = JSON.stringify(ele, null, 2);
+              pty.stdin.write(pj);
+            } else {
+              pty.stdin.write(ele);
+            }
+          }
+        }
+      }
+
+    } catch(e) {
+      console.log(e)
+      pty.stdin.write(data);
+    }
   });
 
   var io = t.io.push();
