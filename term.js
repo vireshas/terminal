@@ -3,6 +3,8 @@ var lib = require('hterm-umdjs').lib
 var spawn = require('child_pty').spawn
 var cmd = require("child_process").execSync
 var WebSocket = require('ws');
+var path = require('path');
+const eNotify = require('node-notifier');
 
 const { app, BrowserWindow, shell, Menu } = require('electron').remote;
 
@@ -84,10 +86,20 @@ pty.stdout.on('data', (data) => {
 
 msg = {user: hostname, room: "", message: ""}
 
+function notify(title, body) {
+  eNotify.notify({
+    title: title,
+    text: body,
+    icon: path.join(__dirname, 'images/sudo.jpg')
+  })
+}
+
+
 t.onTerminalReady = function() {
 
   ws.on('open', function open() {
     ws.send(JSON.stringify(msg));
+    notify("Sudo", "You are connected to hubot")
   });
 
   ws.on('message', function(data, flags) {
