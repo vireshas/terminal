@@ -5,7 +5,6 @@ var cmd = require("child_process").execSync
 var WebSocket = require('ws');
 var path = require('path');
 const eNotify = require('node-notifier');
-
 const { app, BrowserWindow, shell, Menu } = require('electron').remote;
 
 var hostname = cmd("hostname").toString()
