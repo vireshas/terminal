@@ -8,11 +8,12 @@ const { app, BrowserWindow, shell, Menu } = require('electron').remote;
 
 var hostname = cmd("hostname").toString()
 var defaultShell = require('default-shell')
+var ws = new WebSocket('ws://localhost:3000');
+
 hterm.defaultStorage = new lib.Storage.Memory();
 
 var t = new hterm.Terminal()
 var pty = spawn(defaultShell, [])
-
 
 function isWebpage(data) {
   if ( data.match(/https?/) ) {
@@ -43,9 +44,7 @@ function openImageInline(data) {
 
 function popOpenLink(link) {
   let c = new BrowserWindow({modal: true, show: false})
-  t.io.println(link)
-  url = link.split(" ")[1]
-  c.loadURL(url)
+  c.loadURL(link)
   c.once('ready-to-show', () => {
     c.show()
   })
@@ -53,15 +52,23 @@ function popOpenLink(link) {
 
 function inputHandler(data) {
   let command = t.getRowText(t.getCursorRow()).split("\(master\)")[1]
-  if (command)
-    command = command.slice(3, command.length)
-  else
-    command = data
+  console.log(`56 command ${command}`)
 
-  console.log(`command ${command}`)
+  if (command) {
+    command = command.slice(3, command.length)
+    console.log(`59 command ${command}`)
+    if ( command.length > 0) {
+      msg["message"] = command
+      let l_msg = JSON.stringify(msg)
+      console.log(`62 command ${l_msg}`)
+      ws.send(l_msg)
+    }
+  }
+
   if (shouldOpenInNewWindow(command)) {
     console.log(`pop open ${command}`)
-    popOpenLink(command)
+    url = command.split(" ")[1]
+    popOpenLink(url)
   } else if (isImage(command)) {
     console.log(`inline ${command}`)
     openImageInline(command)
@@ -78,16 +85,15 @@ pty.stdout.on('data', (data) => {
 msg = {user: hostname, room: "", message: ""}
 
 t.onTerminalReady = function() {
-  var ws = new WebSocket('ws://localhost:3000');
 
   ws.on('open', function open() {
     ws.send(JSON.stringify(msg));
   });
 
   ws.on('message', function(data, flags) {
-    t.io.print(data)
-    // flags.binary will be set if a binary data is received.
-    // flags.masked will be set if the data was masked.
+    data = JSON.parse(data)
+    console.log(data[0])
+    popOpenLink(data[0])
   });
 
   var io = t.io.push();
