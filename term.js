@@ -61,6 +61,10 @@ function inputHandler(data) {
     }
   }
 
+  if (!command)
+    command = data
+
+  console.log(command)
   if (shouldOpenInNewWindow(command)) {
     console.log(`pop open ${command}`)
     url = command.split(" ")[1]
@@ -95,20 +99,20 @@ t.onTerminalReady = function() {
         popOpenLink(data[0])
       } else {
         t.clear()
+        //t.deleteLines(1)
         if ( typeof data == 'string' ) {
           pty.stdin.write(ele);
         } else {
           for (let ele of data) {
             if (typeof ele == 'object') {
               var pj = JSON.stringify(ele, null, 2);
-              pty.stdin.write(pj);
+              t.io.println(pj)
             } else {
-              pty.stdin.write(ele);
+              t.io.println(ele)
             }
           }
         }
       }
-
     } catch(e) {
       console.log(e)
       pty.stdin.write(data);
