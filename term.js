@@ -110,7 +110,7 @@ t.onTerminalReady = function() {
       if (isWebpage(data[0])) {
         popOpenLink(data[0])
       } else {
-        t.clear()
+        //t.clear()
         //t.deleteLines(1)
         if ( typeof data == 'string' ) {
           pty.stdin.write(ele);
@@ -118,9 +118,11 @@ t.onTerminalReady = function() {
           for (let ele of data) {
             if (typeof ele == 'object') {
               var pj = JSON.stringify(ele, null, 2);
-              t.io.println(pj)
+              notify("Hubot says", pj)
+              t.io.println("")
             } else {
-              t.io.println(ele)
+              notify("Hubot says", ele)
+              t.io.println("")
             }
           }
         }
